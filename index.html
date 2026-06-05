@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>paperlab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<style>
+  :root{
+    --ink:#0c1320; --ink2:#111b2c; --line:#22344d; --fog:#8aa0bd;
+    --text:#d7e3f2; --bright:#f3f8ff; --cyan:#54d0e6; --cyan-dim:#2b7e8e;
+    --hi:#ff7a6b; --med:#f5c451; --lo:#6fae7d; --teal:#46c6a0;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+    --sans:'IBM Plex Sans',sans-serif; --disp:'Fraunces',Georgia,serif;
+  }
+  *{box-sizing:border-box} html,body{height:100%;margin:0}
+  body{font-family:var(--sans);color:var(--text);background:var(--ink);
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:34px 34px;background-position:-1px -1px;background-attachment:fixed;}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(120% 120% at 80% 0%,transparent 40%,rgba(8,12,20,.85) 100%);}
+  .app{display:grid;grid-template-columns:248px 1fr 1fr;height:100vh;position:relative;z-index:1}
+  .col{height:100vh;overflow:auto;border-right:1px solid var(--line)}
+  .col::-webkit-scrollbar{width:9px}.col::-webkit-scrollbar-thumb{background:var(--line);border-radius:9px}
+
+  aside.over{background:rgba(84,208,230,.05)}
+  .brand{padding:22px 20px 16px;border-bottom:1px solid var(--line)}
+  .brand h1{font-family:var(--disp);font-weight:900;font-size:30px;margin:0;letter-spacing:-.02em;color:var(--bright);line-height:1}
+  .brand h1 .dot{color:var(--cyan)}
+  .brand p{margin:6px 0 0;font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan-dim)}
+  .secttl{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--fog);padding:18px 20px 10px}
+  .upbtn{display:block;width:calc(100% - 32px);margin:0 16px 14px;font-family:var(--mono);font-size:12px;letter-spacing:.05em;background:rgba(84,208,230,.08);color:var(--cyan);border:1px solid var(--cyan-dim);border-radius:6px;padding:11px;cursor:pointer;transition:.15s}
+  .upbtn:hover{background:rgba(84,208,230,.16);border-color:var(--cyan)}
+  .plist{list-style:none;margin:0;padding:0 8px 24px}
+  .plist li{font-family:var(--mono);font-size:12px;padding:9px 12px;border-radius:5px;cursor:pointer;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid transparent}
+  .plist li:hover{background:var(--ink2)} .plist li.active{background:rgba(84,208,230,.1);border-color:var(--cyan-dim);color:var(--bright)}
+  .plist li::before{content:"\203A  ";color:var(--cyan)}
+  .toggle{display:flex;align-items:center;gap:8px;padding:0 20px 18px;font-family:var(--mono);font-size:11px;color:var(--fog);cursor:pointer}
+  .toggle input{accent-color:var(--cyan)}
+
+  .viewer{display:flex;flex-direction:column}
+  .vhdr{padding:14px 18px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--fog)}
+  .frame{flex:1;border:0;width:100%;background:#1b2433}
+  .empty{flex:1;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;color:var(--cyan-dim);text-align:center;padding:30px}
+
+  .tabs{display:flex;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--ink);z-index:2}
+  .tab{flex:1;padding:13px 4px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;text-align:center;color:var(--fog);cursor:pointer;border-bottom:2px solid transparent}
+  .tab:hover{color:var(--text)} .tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+  .pane{display:none;padding:18px} .pane.active{display:block}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  button.act{font-family:var(--mono);font-size:11px;letter-spacing:.06em;background:var(--ink2);color:var(--text);border:1px solid var(--line);border-radius:5px;padding:9px 13px;cursor:pointer;transition:.15s}
+  button.act:hover{border-color:var(--cyan);color:var(--cyan)}
+  button.act.primary{background:var(--cyan);color:#04222a;border-color:var(--cyan);font-weight:600}
+  button.act.ghost{border-style:dashed} button.act:disabled{opacity:.4;cursor:wait}
+  input.txt{flex:1;min-width:120px;font-family:var(--mono);font-size:12px;background:var(--ink2);border:1px solid var(--line);color:var(--text);border-radius:5px;padding:10px 12px}
+  input.txt:focus{outline:none;border-color:var(--cyan)}
+
+  /* decision banner */
+  .dec{border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin-bottom:18px;background:var(--ink2)}
+  .dec.pending{color:var(--fog);font-family:var(--mono);font-size:12px}
+  .decmain{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .recpill{font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:5px 13px;border-radius:6px;border:1px solid}
+  .decmeta{font-family:var(--mono);font-size:11px;color:var(--fog)}
+  .decsum{margin-top:10px;font-size:12.5px}
+  .dec.accept{border-color:var(--lo)} .dec.accept .recpill{color:var(--lo);border-color:var(--lo);background:rgba(111,174,125,.12)}
+  .dec.weak-accept{border-color:var(--teal)} .dec.weak-accept .recpill{color:var(--teal);border-color:var(--teal);background:rgba(70,198,160,.12)}
+  .dec.weak-reject{border-color:var(--med)} .dec.weak-reject .recpill{color:var(--med);border-color:var(--med);background:rgba(245,196,81,.12)}
+  .dec.reject{border-color:var(--hi)} .dec.reject .recpill{color:var(--hi);border-color:var(--hi);background:rgba(255,122,107,.12)}
+
+  .blk{border-left:2px solid var(--line);padding:2px 0 2px 14px;margin:0 0 22px}
+  .blk h4{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan);margin:0 0 10px}
+  .sev{display:inline-block;font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.1em;padding:1px 6px;border-radius:3px;text-transform:uppercase}
+  .sev.high{background:rgba(255,122,107,.15);color:var(--hi)} .sev.med{background:rgba(245,196,81,.15);color:var(--med)} .sev.low{background:rgba(111,174,125,.15);color:var(--lo)}
+
+  /* thinking */
+  .think{display:none;margin:0 0 12px;border:1px dashed var(--line);border-radius:6px;background:rgba(138,160,189,.04)}
+  body.show-think .think{display:block}
+  .think summary{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--fog);padding:8px 12px;cursor:pointer;list-style:none}
+  .think summary::before{content:"\25B8 ";color:var(--cyan-dim)} .think[open] summary::before{content:"\25BE "}
+  .think .md{padding:0 14px 12px;font-size:12px;color:var(--fog);opacity:.85}
+
+  /* sources */
+  .sources{border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin-bottom:18px;background:rgba(84,208,230,.03)}
+  .sources .stl{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan);margin-bottom:8px}
+  .sources .q{font-family:var(--mono);font-size:11px;color:var(--fog);margin-bottom:8px}
+  .srow{display:flex;gap:8px;align-items:baseline;padding:5px 0;border-top:1px solid var(--line)}
+  .srow:nth-child(2){border-top:0}
+  .via{font-family:var(--mono);font-size:8.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:1px 6px;border-radius:3px;flex-shrink:0}
+  .via.arxiv{background:rgba(245,196,81,.15);color:var(--med)} .via.exa{background:rgba(84,208,230,.15);color:var(--cyan)} .via.corpus{background:rgba(111,174,125,.15);color:var(--lo)} .via.web{background:rgba(135,160,200,.15);color:var(--fog)}
+  .srow a,.srow .cn{font-family:var(--sans);font-size:12px;color:var(--text);text-decoration:none}
+  .srow a:hover{color:var(--cyan)}
+
+  /* fact-check */
+  .fc{border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin-bottom:12px}
+  .fc .h{display:flex;gap:9px;align-items:baseline;margin-bottom:7px}
+  .vb{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;flex-shrink:0}
+  .vb.supported{background:rgba(111,174,125,.18);color:var(--lo)} .vb.contradicted{background:rgba(255,122,107,.18);color:var(--hi)} .vb.unclear{background:rgba(245,196,81,.18);color:var(--med)}
+  .fc .claim{font-family:var(--sans);font-size:13px;color:var(--bright);line-height:1.4}
+  .fc .why{font-family:var(--sans);font-size:12px;color:var(--text);line-height:1.55;margin-bottom:7px}
+  .fc .links{font-family:var(--mono);font-size:10.5px;line-height:1.7}
+  .fc .links a{color:var(--cyan-dim);text-decoration:none;margin-right:10px} .fc .links a:hover{color:var(--cyan)}
+
+  .log{display:flex;flex-direction:column;gap:12px;margin-bottom:14px}
+  .bub{font-size:13px;line-height:1.6;padding:11px 14px;border-radius:7px;max-width:92%}
+  .bub.you{align-self:flex-end;background:rgba(84,208,230,.1);border:1px solid var(--cyan-dim);font-family:var(--mono);white-space:pre-wrap}
+  .bub.ai{align-self:flex-start;background:var(--ink2);border:1px solid var(--line)}
+  .hit{border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin-bottom:10px}
+  .hit .t{font-family:var(--sans);font-weight:600;color:var(--bright);font-size:13px;margin-bottom:5px}
+  .hit .t a{color:var(--cyan);text-decoration:none}
+  .hit .s{font-family:var(--mono);font-size:11px;color:var(--fog);line-height:1.55}
+  .hit .sc{font-family:var(--mono);font-size:10px;color:var(--cyan-dim);float:right}
+  .hint{font-family:var(--mono);font-size:11px;color:var(--cyan-dim);margin-top:2px;line-height:1.6}
+
+  /* markdown */
+  .md{font-family:var(--sans);font-size:13px;line-height:1.62;color:var(--text)}
+  .md > :first-child{margin-top:0} .md > :last-child{margin-bottom:0}
+  .md p{margin:0 0 10px}
+  .md h1,.md h2,.md h3,.md h4{font-family:var(--sans);color:var(--bright);margin:14px 0 8px;line-height:1.25}
+  .md h1{font-size:17px}.md h2{font-size:15px}.md h3{font-size:13.5px}.md h4{font-size:12.5px}
+  .md ul,.md ol{margin:0 0 10px;padding-left:20px}.md li{margin:3px 0}
+  .md code{font-family:var(--mono);background:var(--ink);padding:1px 5px;border-radius:3px;font-size:.9em;color:var(--cyan)}
+  .md pre{background:var(--ink);border:1px solid var(--line);border-radius:6px;padding:12px;overflow:auto;margin:0 0 12px}
+  .md pre code{background:none;padding:0;color:var(--text)}
+  .md blockquote{border-left:2px solid var(--cyan-dim);margin:0 0 10px;padding-left:12px;color:var(--fog)}
+  .md strong{color:var(--bright)} .md a{color:var(--cyan)}
+  .md table{border-collapse:collapse;margin:0 0 12px;font-size:11.5px;width:100%}
+  .md th,.md td{border:1px solid var(--line);padding:5px 8px;text-align:left}.md th{background:var(--ink2);color:var(--bright)}
+  .md hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+  .md .katex{font-size:1.04em}
+  /* streaming caret */
+  .streaming .ans::after{content:"\258B";color:var(--cyan);margin-left:1px;animation:blink 1s steps(2) infinite}
+  .bub.ai.streaming::after{content:"\258B";color:var(--cyan);animation:blink 1s steps(2) infinite}
+  @keyframes blink{50%{opacity:0}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="col" id="side">
+    <div class="brand"><h1>paperlab<span class="dot">.</span></h1><p>local &middot; imc workbench</p></div>
+    <div class="secttl">Papers</div>
+    <button class="upbtn" id="upBtn">&#43; Upload PDF</button>
+    <input type="file" id="file" accept="application/pdf" hidden>
+    <ul class="plist" id="plist"></ul>
+    <label class="toggle"><input type="checkbox" id="thinkToggle"> show model thinking</label>
+  </aside>
+
+  <section class="col viewer">
+    <div class="vhdr" id="vhdr">no paper selected</div>
+    <iframe class="frame" id="frame" style="display:none"></iframe>
+    <div class="empty" id="vempty">select or upload a paper<br>to view it here</div>
+  </section>
+
+  <section class="col">
+    <div class="tabs">
+      <div class="tab active" data-t="review">Review</div>
+      <div class="tab" data-t="chat">Brainstorm</div>
+      <div class="tab" data-t="corpus">Corpus</div>
+      <div class="tab" data-t="web">Web</div>
+      <div class="tab" data-t="arxiv">arXiv</div>
+    </div>
+
+    <div class="pane active" id="p-review">
+      <div class="row">
+        <button class="act primary" data-p="all">Run all</button>
+        <button class="act" data-p="methodology">Methodology</button>
+        <button class="act" data-p="ethics">Ethics</button>
+        <button class="act" data-p="novelty">Novelty</button>
+        <button class="act" data-p="scoping">Scoping</button>
+      </div>
+      <div class="row">
+        <button class="act ghost" id="decbtn">Overall decision</button>
+        <button class="act ghost" id="fcbtn">Fact-check claims</button>
+        <button class="act" id="addc">&#43; add this paper to corpus</button>
+      </div>
+      <div id="decision"></div>
+      <div id="rsources"></div>
+      <div id="fcout"></div>
+      <div id="rout"></div>
+    </div>
+
+    <div class="pane" id="p-chat">
+      <div class="log" id="log"></div>
+      <div class="row"><input class="txt" id="cin" placeholder="ask / pressure-test the paper&hellip;"><button class="act primary" id="csend">send</button></div>
+    </div>
+
+    <div class="pane" id="p-corpus">
+      <div class="row"><input class="txt" id="cq" placeholder="semantic search your corpus&hellip;"><button class="act primary" id="cgo">search</button></div>
+      <div id="cres"></div>
+    </div>
+
+    <div class="pane" id="p-web">
+      <div class="row"><input class="txt" id="wq" placeholder="search the web (SearXNG)&hellip;"><button class="act primary" id="wgo">search</button></div>
+      <div id="wres"></div>
+    </div>
+
+    <div class="pane" id="p-arxiv">
+      <div class="row"><input class="txt" id="aq" placeholder="search arXiv (free, no key)&hellip;"><button class="act primary" id="ago">search</button></div>
+      <div id="ares"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+marked.setOptions({breaks:true, gfm:true});
+// Stable renderer: stash math behind placeholders, run markdown, then KaTeX.
+// If KaTeX fails, math falls back to raw text but markdown still renders.
+function mdize(s){
+  s=String(s||''); const math=[];
+  const stash=(tex,display)=>{ math.push({tex,display}); return `@@MATH${math.length-1}@@`; };
+  s=s.replace(/\$\$([\s\S]+?)\$\$/g,(_,x)=>stash(x,true))
+     .replace(/\\\[([\s\S]+?)\\\]/g,(_,x)=>stash(x,true))
+     .replace(/\\\(([\s\S]+?)\\\)/g,(_,x)=>stash(x,false))
+     .replace(/\$([^$\n]+?)\$/g,(_,x)=>stash(x,false));
+  let html; try{ html=marked.parse(s); }catch(e){ html=s; }
+  return html.replace(/@@MATH(\d+)@@/g,(m,i)=>{
+    const it=math[+i]; if(!it) return m;
+    const raw=(it.display?'$$':'$')+it.tex+(it.display?'$$':'$');
+    if(!window.katex) return raw;
+    try{ return katex.renderToString(it.tex,{displayMode:it.display,throwOnError:false}); }
+    catch(e){ return raw; }
+  });
+}
+function colorize(html){ return html.replace(/\[SEVERITY:\s*(high|med|low)\]/gi,(_,s)=>`<span class="sev ${s.toLowerCase()}">${s}</span>`); }
+
+document.getElementById('thinkToggle').onchange=e=>document.body.classList.toggle('show-think',e.target.checked);
+
+let current=null, history=[];
+
+async function refresh(){
+  const files=await(await fetch('/papers')).json();
+  const ul=document.getElementById('plist'); ul.innerHTML='';
+  files.forEach(f=>{const li=document.createElement('li');li.textContent=f;if(f===current)li.className='active';li.onclick=()=>select(f);ul.appendChild(li);});
+}
+async function select(name){
+  current=name; refresh();
+  document.getElementById('vhdr').textContent=name;
+  const fr=document.getElementById('frame'); fr.src='/pdf/'+encodeURIComponent(name); fr.style.display='block';
+  document.getElementById('vempty').style.display='none';
+  ['decision','rsources','fcout','rout'].forEach(id=>document.getElementById(id).innerHTML='');
+  await loadHistory(name);
+}
+
+const side=document.getElementById('side'), file=document.getElementById('file');
+document.getElementById('upBtn').onclick=()=>file.click();
+file.onchange=()=>file.files[0]&&upload(file.files[0]);
+['dragover','dragenter'].forEach(e=>side.addEventListener(e,ev=>{ev.preventDefault();side.classList.add('over');}));
+['dragleave','drop'].forEach(e=>side.addEventListener(e,ev=>{ev.preventDefault();side.classList.remove('over');}));
+side.addEventListener('drop',ev=>{const f=ev.dataTransfer.files[0]; if(f&&f.type==='application/pdf')upload(f);});
+async function upload(f){const fd=new FormData();fd.append('file',f);const d=await(await fetch('/upload',{method:'POST',body:fd})).json();await refresh();select(d.name);}
+
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.pane').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active'); document.getElementById('p-'+t.dataset.t).classList.add('active');
+});
+
+async function stream(url, body, onTok){
+  const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const rd=res.body.getReader(), dec=new TextDecoder();
+  while(true){const {done,value}=await rd.read(); if(done)break; onTok(dec.decode(value,{stream:true}));}
+}
+async function streamLines(url, body, onObj){
+  const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const rd=res.body.getReader(), dec=new TextDecoder(); let buf='';
+  while(true){const {done,value}=await rd.read(); if(done)break; buf+=dec.decode(value,{stream:true});
+    let i; while((i=buf.indexOf('\n'))>=0){const ln=buf.slice(0,i).trim();buf=buf.slice(i+1);if(ln){try{onObj(JSON.parse(ln));}catch(e){}}}}
+  if(buf.trim()){try{onObj(JSON.parse(buf.trim()));}catch(e){}}
+}
+
+// split <think>..</think> from answer
+function splitThink(raw){
+  const o=raw.search(/<think>/i), c=raw.search(/<\/think>/i);
+  if(o>-1&&c>-1) return {think:raw.slice(o+7,c), answer:raw.slice(c+8)};
+  if(o>-1) return {think:raw.slice(o+7), answer:'', open:true};
+  return {think:'', answer:raw};
+}
+// paint a streaming target with thinking + markdown(+math)
+function paint(el, raw){
+  const {think,answer,open}=splitThink(raw);
+  let h='';
+  if(think.trim()) h+=`<details class="think"${open?' open':''}><summary>${open?'thinking…':'thinking'}</summary><div class="md">${mdize(think)}</div></details>`;
+  h+=`<div class="md ans">${colorize(mdize(answer))}</div>`;
+  el.innerHTML=h;
+}
+
+// ---- decision banner
+function renderDecision(box, raw){
+  const {answer}=splitThink(raw); const t=answer;
+  const rec=((t.match(/RECOMMENDATION:\s*(accept|weak accept|weak reject|reject)/i)||[])[1]||'').toLowerCase();
+  const score=(t.match(/SCORE:\s*([1-5])/i)||[])[1]||'';
+  const conf=(t.match(/CONFIDENCE:\s*(low|medium|high)/i)||[])[1]||'';
+  const summ=(t.match(/SUMMARY:\s*([\s\S]*)$/i)||[])[1]||'';
+  const cls=rec.replace(/\s+/g,'-')||'pending';
+  box.innerHTML=`<div class="dec ${cls}"><div class="decmain"><span class="recpill">${rec||'evaluating…'}</span>`+
+    (score?`<span class="decmeta">score ${score}/5</span>`:'')+(conf?`<span class="decmeta">${conf} confidence</span>`:'')+`</div>`+
+    (summ?`<div class="md decsum">${mdize(summ)}</div>`:'')+`</div>`;
+}
+async function runDecision(reviews){
+  const box=document.getElementById('decision');
+  box.innerHTML='<div class="dec pending">forming overall recommendation&hellip;</div>';
+  let buf=''; await stream('/decision',{name:current,reviews},tok=>{buf+=tok;renderDecision(box,buf);});
+}
+document.getElementById('decbtn').onclick=async()=>{
+  if(!current){alert('select a paper first');return;}
+  const reviews={};
+  document.querySelectorAll('#rout .blk').forEach(b=>{const k=b.dataset.p; if(k)reviews[k]=b.querySelector('.ans')?.textContent||'';});
+  await runDecision(reviews);
+};
+
+// ---- sources panel
+function renderSources(s){
+  const box=document.getElementById('rsources'); const rows=[];
+  (s.web||[]).forEach(w=>rows.push(`<div class="srow"><span class="via ${w.via}">${w.via}</span><a href="${w.url}" target="_blank">${w.title||w.url}</a></div>`));
+  (s.corpus||[]).forEach(c=>rows.push(`<div class="srow"><span class="via corpus">corpus</span><span class="cn">${c.title}</span></div>`));
+  box.innerHTML=`<div class="sources"><div class="stl">Websites &amp; sources fetched</div>`+
+    (s.query?`<div class="q">query: ${s.query}</div>`:'')+
+    (rows.length?rows.join(''):'<div class="q">no related work found &mdash; add corpus papers or set EXA_API_KEY</div>')+`</div>`;
+}
+
+// ---- reviews
+const PERSONAS=['methodology','ethics','novelty','scoping'];
+document.querySelectorAll('#p-review .row button[data-p]').forEach(b=>{
+  b.onclick=async()=>{
+    if(!current){alert('select a paper first');return;}
+    const list=b.dataset.p==='all'?PERSONAS:[b.dataset.p];
+    const out=document.getElementById('rout'); out.innerHTML='';
+    document.getElementById('decision').innerHTML='';
+    document.querySelectorAll('#p-review button').forEach(x=>x.disabled=true);
+    let sources={web:[],corpus:[]};
+    if(list.includes('novelty')){
+      document.getElementById('rsources').innerHTML='<div class="sources"><div class="stl">Websites &amp; sources &mdash; fetching&hellip;</div></div>';
+      try{sources=await(await fetch('/review/sources',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:current})})).json();}catch(e){}
+      renderSources(sources);
+    }
+    const reviews={};
+    for(const p of list){
+      const blk=document.createElement('div'); blk.className='blk'; blk.dataset.p=p;
+      blk.innerHTML=`<h4>${p}</h4><div class="body"></div>`; out.appendChild(blk);
+      const body=blk.querySelector('.body'); let buf='';
+      blk.classList.add('streaming');
+      await stream('/review',{name:current,persona:p,sources},tok=>{buf+=tok;paint(body,buf);});
+      blk.classList.remove('streaming'); paint(body,buf);
+      reviews[p]=splitThink(buf).answer;
+    }
+    document.querySelectorAll('#p-review button').forEach(x=>x.disabled=false);
+    if(list.length>1) runDecision(reviews);
+  };
+});
+
+// ---- fact-check
+document.getElementById('fcbtn').onclick=async function(){
+  if(!current){alert('select a paper first');return;}
+  const box=document.getElementById('fcout');
+  box.innerHTML='<p class="hint">extracting claims &amp; searching the web&hellip; (a few model passes, give it a minute)</p>';
+  this.disabled=true; let first=true;
+  await streamLines('/factcheck',{name:current},o=>{
+    if(o.error){box.innerHTML='<p class="hint">'+o.error+'</p>';first=false;return;}
+    if(first){box.innerHTML='';first=false;}
+    const m=(o.verdict||'').match(/VERDICT:\s*(supported|contradicted|unclear)/i);
+    const v=m?m[1].toLowerCase():'unclear';
+    const why=(o.verdict||'').replace(/VERDICT:[^\n]*/i,'').replace(/WHY:/i,'').trim();
+    const links=(o.sources||[]).map(s=>`<a href="${s.url}" target="_blank">${s.title||s.url}</a>`).join('');
+    box.insertAdjacentHTML('beforeend',`<div class="fc"><div class="h"><span class="vb ${v}">${v}</span><span class="claim">${o.claim}</span></div>`+(why?`<div class="why">${mdize(why)}</div>`:'')+`<div class="links">${links}</div></div>`);
+  });
+  if(first)box.innerHTML='<p class="hint">no claims checked. Is SearXNG running? Check the Web tab.</p>';
+  this.disabled=false;
+};
+
+document.getElementById('addc').onclick=async function(){
+  if(!current){alert('select a paper first');return;}
+  this.disabled=true; this.textContent='adding\u2026';
+  await fetch('/corpus/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:current})});
+  this.textContent='\u2713 added'; setTimeout(()=>{this.innerHTML='&#43; add this paper to corpus';this.disabled=false;},2000);
+};
+
+// ---- chat
+async function loadHistory(name){
+  history=await(await fetch('/chat/history?name='+encodeURIComponent(name))).json()||[];
+  const log=document.getElementById('log'); log.innerHTML='';
+  history.forEach(m=>renderBubble(m.role,m.content)); log.scrollTop=log.scrollHeight;
+}
+function renderBubble(role,content){
+  const log=document.getElementById('log'); const d=document.createElement('div');
+  if(role==='user'){d.className='bub you';d.textContent=content;}
+  else{d.className='bub ai';paint(d,content);}
+  log.appendChild(d); return d;
+}
+async function send(){
+  if(!current){alert('select a paper first');return;}
+  const inp=document.getElementById('cin'); const msg=inp.value.trim(); if(!msg)return;
+  inp.value=''; renderBubble('user',msg);
+  const ai=renderBubble('assistant',''); ai.classList.add('streaming');
+  const log=document.getElementById('log'); let buf='';
+  await stream('/chat',{name:current,history,message:msg},tok=>{buf+=tok;paint(ai,buf);log.scrollTop=log.scrollHeight;});
+  ai.classList.remove('streaming'); paint(ai,buf);
+  history.push({role:'user',content:msg},{role:'assistant',content:splitThink(buf).answer});
+  await fetch('/chat/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:current,history})});
+}
+document.getElementById('csend').onclick=send;
+document.getElementById('cin').addEventListener('keydown',e=>{if(e.key==='Enter')send();});
+
+// ---- corpus / web / arxiv
+function hitHTML(h,linked){return `<div class="hit">`+(h.score!==undefined?`<span class="sc">${h.score}</span>`:'')+`<div class="t">${linked?`<a href="${h.url}" target="_blank">${h.title||h.url}</a>`:h.title}</div><div class="s">${h.text||h.summary||''}</div></div>`;}
+document.getElementById('cgo').onclick=async()=>{
+  const q=document.getElementById('cq').value.trim(); if(!q)return;
+  const res=await(await fetch('/corpus/search?q='+encodeURIComponent(q))).json();
+  document.getElementById('cres').innerHTML=res.length?res.map(h=>hitHTML(h,false)).join(''):'<p class="hint">corpus empty &mdash; add papers from the Review tab.</p>';
+};
+async function runSearch(path,inputId,boxId){
+  const q=document.getElementById(inputId).value.trim(); if(!q)return;
+  const box=document.getElementById(boxId); box.innerHTML='<p class="hint">searching\u2026</p>';
+  const res=await(await fetch(path+encodeURIComponent(q))).json();
+  if(res.error){box.innerHTML='<p class="hint">'+res.error+'</p>';return;}
+  box.innerHTML=res.length?res.map(h=>hitHTML(h,true)).join(''):'<p class="hint">no results.</p>';
+}
+document.getElementById('wgo').onclick=()=>runSearch('/websearch?q=','wq','wres');
+document.getElementById('ago').onclick=()=>runSearch('/arxiv?q=','aq','ares');
+
+refresh();
+</script>
+</body>
+</html>
