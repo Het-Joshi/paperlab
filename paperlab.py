@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-paperlab — a tiny, fully-local paper review & brainstorm tool for IMC-style work.
+paperlab — a tiny, fully-local paper review & brainstorm tool for research work.
 
 Design notes:
   * Python orchestrates; the local model only does narrow text generation.
@@ -162,30 +162,41 @@ def corpus_search(query, k=5):
 
 # ----------------------------------------------------------------------------- web (not local)
 def arxiv_search(query, k=6):
-    """Free, no API key. Returns (title, summary, url) tuples."""
-    url = ("http://export.arxiv.org/api/query?search_query="
-           + urllib.parse.quote(query)
-           + f"&start=0&max_results={k}")
-    with urllib.request.urlopen(url, timeout=30) as resp:
-        xml = resp.read()
-    ns = {"a": "http://www.w3.org/2005/Atom"}
-    out = []
-    for e in ET.fromstring(xml).findall("a:entry", ns):
-        out.append((
-            e.find("a:title", ns).text.strip().replace("\n", " "),
-            e.find("a:summary", ns).text.strip().replace("\n", " ")[:400],
-            e.find("a:id", ns).text.strip(),
-        ))
-    return out
+    """Free, no API key. arXiv asks for a descriptive User-Agent and throttles
+    unidentified clients (the cause of read timeouts). Returns (title, summary, url)."""
+    url = ("https://export.arxiv.org/api/query"
+           f"?search_query=all:{urllib.parse.quote(query)}"
+           f"&start=0&max_results={k}")
+    last = None
+    for _ in range(2):  # one retry; arXiv can be transiently slow
+        try:
+            r = requests.get(url, headers={"User-Agent": "paperlab/1.0 (research aid)"},
+                             timeout=20)
+            r.raise_for_status()
+            ns = {"a": "http://www.w3.org/2005/Atom"}
+            out = []
+            for e in ET.fromstring(r.content).findall("a:entry", ns):
+                out.append((
+                    (e.find("a:title", ns).text or "").strip().replace("\n", " "),
+                    (e.find("a:summary", ns).text or "").strip().replace("\n", " ")[:400],
+                    (e.find("a:id", ns).text or "").strip(),
+                ))
+            return out
+        except requests.exceptions.RequestException as e:
+            last = e
+    raise last
 
 
-def web_search(query, k=6):
+def web_search(query, k=6, engines=None):
     """General web search via self-hosted SearXNG. Free, no key, no rate limit.
-    Returns (title, snippet, url). Raises on connection error so callers can
-    surface a clear 'start SearXNG' message."""
+    Pass engines='arxiv' (etc.) to restrict to one engine. Returns
+    (title, snippet, url). Raises on connection error."""
+    params = {"q": query, "format": "json"}
+    if engines:
+        params["engines"] = engines
     r = requests.get(
         f"{SEARXNG}/search",
-        params={"q": query, "format": "json"},
+        params=params,
         headers={"User-Agent": "paperlab/1.0"},
         timeout=30,
     )
@@ -215,7 +226,7 @@ def exa_search(query, k=6):
 PERSONAS = {
     "methodology": (
         "You are a skeptical measurement-methodology reviewer for an internet "
-        "measurement venue (IMC). You care only about measurement validity.",
+        "measurement venue (IMC) and other top venues like USENIX, S&P. You care only about measurement validity.",
         "Find every place where the measurement design could undermine a claim. "
         "Check: confounds, vantage-point / sampling bias, missing ground truth or "
         "baseline, sample size & representativeness, statistical validity, and any "
@@ -345,7 +356,7 @@ def factcheck(path, n=5):
 
 # ----------------------------------------------------------------------------- cli
 def main():
-    p = argparse.ArgumentParser(description="Local paper review & brainstorm for IMC work.")
+    p = argparse.ArgumentParser(description="Local paper review & brainstorm for research work.")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     s = sub.add_parser("ingest", help="extract a PDF to markdown (caches it)")

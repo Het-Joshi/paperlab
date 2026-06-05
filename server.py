@@ -21,15 +21,24 @@ from paperlab import (
 
 PAPERS = os.path.join(HOME, "papers")
 CHATS = os.path.join(HOME, "chats")
+REVIEWS = os.path.join(HOME, "reviews")
 os.makedirs(PAPERS, exist_ok=True)
 os.makedirs(CHATS, exist_ok=True)
+os.makedirs(REVIEWS, exist_ok=True)
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
-def chat_file(name):
+def _hash_file(folder, name):
     import hashlib
-    h = hashlib.md5(os.path.basename(name).encode()).hexdigest()
-    return os.path.join(CHATS, h + ".json")
+    return os.path.join(folder, hashlib.md5(os.path.basename(name).encode()).hexdigest() + ".json")
+
+
+def chat_file(name):
+    return _hash_file(CHATS, name)
+
+
+def review_file(name):
+    return _hash_file(REVIEWS, name)
 
 app = FastAPI()
 
@@ -188,10 +197,22 @@ def corpus_search_route(q: str):
 
 @app.get("/arxiv")
 def arxiv_route(q: str):
+    # 1. try arXiv directly (richest abstracts)
     try:
         return [{"title": t, "summary": s, "url": u} for t, s, u in arxiv_search(q)]
-    except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=502)
+    except Exception:
+        pass
+    # 2. fall back to arXiv via SearXNG — works even if the host itself can't
+    #    reach arxiv.org directly (the container does the fetching)
+    try:
+        return [{"title": t, "summary": s, "url": u}
+                for t, s, u in web_search(q, engines="arxiv")]
+    except requests.exceptions.RequestException:
+        return JSONResponse(
+            {"error": "arXiv unreachable directly and via SearXNG. If only this "
+                      "tab fails while Web works, your host likely has no direct "
+                      "internet egress — start SearXNG (./lab.sh up-web) so arXiv "
+                      "can route through it."}, status_code=502)
 
 
 @app.get("/chat/history")
@@ -233,6 +254,19 @@ def factcheck_route(payload: dict = Body(...)):
 def chat_save(payload: dict = Body(...)):
     with open(chat_file(payload["name"]), "w", encoding="utf-8") as f:
         json.dump(payload.get("history", []), f)
+    return {"ok": True}
+
+
+@app.get("/review/saved")
+def review_saved(name: str):
+    f = review_file(name)
+    return json.load(open(f, encoding="utf-8")) if os.path.exists(f) else {}
+
+
+@app.post("/review/save")
+def review_save(payload: dict = Body(...)):
+    with open(review_file(payload["name"]), "w", encoding="utf-8") as f:
+        json.dump(payload.get("data", {}), f)
     return {"ok": True}
 
 

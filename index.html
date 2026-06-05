@@ -140,7 +140,7 @@
 <body>
 <div class="app">
   <aside class="col" id="side">
-    <div class="brand"><h1>paperlab<span class="dot">.</span></h1><p>local &middot; imc workbench</p></div>
+    <div class="brand"><h1>paperlab<span class="dot">.</span></h1><p>local &middot; research workbench</p><br><p>Project by <a href="https://www.linkedin.com/in/hetjoshi/">Het Joshi</a></p></div>
     <div class="secttl">Papers</div>
     <button class="upbtn" id="upBtn">&#43; Upload PDF</button>
     <input type="file" id="file" accept="application/pdf" hidden>
@@ -174,6 +174,7 @@
       <div class="row">
         <button class="act ghost" id="decbtn">Overall decision</button>
         <button class="act ghost" id="fcbtn">Fact-check claims</button>
+        <button class="act" id="copybtn">Copy review</button>
         <button class="act" id="addc">&#43; add this paper to corpus</button>
       </div>
       <div id="decision"></div>
@@ -228,7 +229,60 @@ function colorize(html){ return html.replace(/\[SEVERITY:\s*(high|med|low)\]/gi,
 
 document.getElementById('thinkToggle').onchange=e=>document.body.classList.toggle('show-think',e.target.checked);
 
-let current=null, history=[];
+let current=null, history=[], reviewState={};
+
+async function saveReview(){
+  if(!current) return;
+  try{ await fetch('/review/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:current,data:reviewState})}); }catch(e){}
+}
+function fcCard(o){
+  const m=(o.verdict||'').match(/VERDICT:\s*(supported|contradicted|unclear)/i);
+  const v=m?m[1].toLowerCase():'unclear';
+  const why=(o.verdict||'').replace(/VERDICT:[^\n]*/i,'').replace(/WHY:/i,'').trim();
+  const links=(o.sources||[]).map(s=>`<a href="${s.url}" target="_blank">${s.title||s.url}</a>`).join('');
+  return `<div class="fc"><div class="h"><span class="vb ${v}">${v}</span><span class="claim">${o.claim}</span></div>`+(why?`<div class="why">${mdize(why)}</div>`:'')+`<div class="links">${links}</div></div>`;
+}
+function rehydrate(d){
+  reviewState = d||{};
+  ['decision','rsources','fcout','rout'].forEach(id=>document.getElementById(id).innerHTML='');
+  const s=reviewState.sources;
+  if(s && (s.query || (s.web&&s.web.length) || (s.corpus&&s.corpus.length))) renderSources(s);
+  if(reviewState.reviews){
+    const out=document.getElementById('rout');
+    for(const [p,txt] of Object.entries(reviewState.reviews)){
+      const blk=document.createElement('div'); blk.className='blk'; blk.dataset.p=p;
+      blk.innerHTML=`<h4>${p}</h4><div class="body"></div>`; out.appendChild(blk);
+      paint(blk.querySelector('.body'), txt);
+    }
+  }
+  if(reviewState.decision) renderDecision(document.getElementById('decision'), reviewState.decision);
+  if(reviewState.factcheck && reviewState.factcheck.length)
+    document.getElementById('fcout').innerHTML = reviewState.factcheck.map(fcCard).join('');
+}
+function reviewToMarkdown(){
+  let s=`# paperlab review — ${current}\n\n`;
+  if(reviewState.decision){ s+=`## Overall recommendation\n${splitThink(reviewState.decision).answer.trim()}\n\n`; }
+  for(const [k,v] of Object.entries(reviewState.reviews||{})) s+=`## ${k.charAt(0).toUpperCase()+k.slice(1)} review\n${(v||'').trim()}\n\n`;
+  if(reviewState.factcheck && reviewState.factcheck.length){
+    s+=`## Fact-check\n`;
+    reviewState.factcheck.forEach(o=>{ const m=(o.verdict||'').match(/VERDICT:\s*(\w+)/i); s+=`- **${m?m[1]:'?'}**: ${o.claim}\n`; });
+    s+='\n';
+  }
+  if(reviewState.sources && reviewState.sources.web && reviewState.sources.web.length){
+    s+=`## Sources fetched\n`;
+    reviewState.sources.web.forEach(w=>s+=`- [${w.via}] ${w.title} — ${w.url}\n`);
+  }
+  return s;
+}
+async function copyText(txt){
+  try{ await navigator.clipboard.writeText(txt); return true; }
+  catch(e){ const ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(_){} ta.remove(); return true; }
+}
+document.getElementById('copybtn').onclick=async function(){
+  if(!reviewState.reviews && !reviewState.decision && !(reviewState.factcheck&&reviewState.factcheck.length)){ alert('nothing to copy yet — run a review first'); return; }
+  await copyText(reviewToMarkdown());
+  const o=this.textContent; this.textContent='\u2713 copied'; setTimeout(()=>this.textContent=o,1500);
+};
 
 async function refresh(){
   const files=await(await fetch('/papers')).json();
@@ -240,7 +294,8 @@ async function select(name){
   document.getElementById('vhdr').textContent=name;
   const fr=document.getElementById('frame'); fr.src='/pdf/'+encodeURIComponent(name); fr.style.display='block';
   document.getElementById('vempty').style.display='none';
-  ['decision','rsources','fcout','rout'].forEach(id=>document.getElementById(id).innerHTML='');
+  let saved={}; try{ saved=await(await fetch('/review/saved?name='+encodeURIComponent(name))).json(); }catch(e){}
+  rehydrate(saved);
   await loadHistory(name);
 }
 
@@ -303,6 +358,7 @@ async function runDecision(reviews){
   const box=document.getElementById('decision');
   box.innerHTML='<div class="dec pending">forming overall recommendation&hellip;</div>';
   let buf=''; await stream('/decision',{name:current,reviews},tok=>{buf+=tok;renderDecision(box,buf);});
+  reviewState.decision=splitThink(buf).answer; await saveReview();
 }
 document.getElementById('decbtn').onclick=async()=>{
   if(!current){alert('select a paper first');return;}
@@ -329,6 +385,8 @@ document.querySelectorAll('#p-review .row button[data-p]').forEach(b=>{
     const list=b.dataset.p==='all'?PERSONAS:[b.dataset.p];
     const out=document.getElementById('rout'); out.innerHTML='';
     document.getElementById('decision').innerHTML='';
+    document.getElementById('rsources').innerHTML='';
+    reviewState.decision='';
     document.querySelectorAll('#p-review button').forEach(x=>x.disabled=true);
     let sources={web:[],corpus:[]};
     if(list.includes('novelty')){
@@ -347,6 +405,7 @@ document.querySelectorAll('#p-review .row button[data-p]').forEach(b=>{
       reviews[p]=splitThink(buf).answer;
     }
     document.querySelectorAll('#p-review button').forEach(x=>x.disabled=false);
+    reviewState.reviews=reviews; reviewState.sources=sources; await saveReview();
     if(list.length>1) runDecision(reviews);
   };
 });
@@ -356,17 +415,15 @@ document.getElementById('fcbtn').onclick=async function(){
   if(!current){alert('select a paper first');return;}
   const box=document.getElementById('fcout');
   box.innerHTML='<p class="hint">extracting claims &amp; searching the web&hellip; (a few model passes, give it a minute)</p>';
-  this.disabled=true; let first=true;
+  this.disabled=true; let first=true; const fcArr=[];
   await streamLines('/factcheck',{name:current},o=>{
     if(o.error){box.innerHTML='<p class="hint">'+o.error+'</p>';first=false;return;}
     if(first){box.innerHTML='';first=false;}
-    const m=(o.verdict||'').match(/VERDICT:\s*(supported|contradicted|unclear)/i);
-    const v=m?m[1].toLowerCase():'unclear';
-    const why=(o.verdict||'').replace(/VERDICT:[^\n]*/i,'').replace(/WHY:/i,'').trim();
-    const links=(o.sources||[]).map(s=>`<a href="${s.url}" target="_blank">${s.title||s.url}</a>`).join('');
-    box.insertAdjacentHTML('beforeend',`<div class="fc"><div class="h"><span class="vb ${v}">${v}</span><span class="claim">${o.claim}</span></div>`+(why?`<div class="why">${mdize(why)}</div>`:'')+`<div class="links">${links}</div></div>`);
+    fcArr.push(o);
+    box.insertAdjacentHTML('beforeend', fcCard(o));
   });
-  if(first)box.innerHTML='<p class="hint">no claims checked. Is SearXNG running? Check the Web tab.</p>';
+  if(first){ box.innerHTML='<p class="hint">no claims checked. Is SearXNG running? Check the Web tab.</p>'; }
+  else { reviewState.factcheck=fcArr; await saveReview(); }
   this.disabled=false;
 };
 
