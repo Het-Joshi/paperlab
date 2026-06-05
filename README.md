@@ -1,8 +1,11 @@
-# paperlab
+# paperlab.
 
 A local research workbench for reviewing, fact-checking, and pressure-testing papers — built for any and all fields. It runs on a 16 GB laptop, keeps the model under 10 GB, and does all of its analysis on your own machine. (You can try playing with smaller models if your system specs are lower)
 
 ---
+
+<img width="1908" height="987" alt="image" src="https://github.com/user-attachments/assets/9bf9a3be-286d-4292-b503-bba5869a956e" />
+
 
 ## What this is — and what it is not
 
