@@ -4,108 +4,117 @@
 [![Published in Learned Publishing](https://img.shields.io/badge/Published-Learned%20Publishing%20(Wiley)-0a7d5a)](https://doi.org/10.1002/leap.2119)
 ![Runs locally](https://img.shields.io/badge/runs-100%25%20local-informational)
 
-**A confidential, human-accountable research workbench for reviewing, fact-checking, and pressure-testing papers — in any field.**
+**A private AI helper for reviewing research papers, in any field. It runs entirely on your own laptop, so the paper never leaves your computer.**
 
-paperlab runs on a 16 GB laptop, keeps the model under 10 GB, and does all of its analysis on your own machine. (Lower specs? Try a smaller model.)
-
-> 📄 **Peer-reviewed research.** paperlab is the companion system to
-> *From Policy to Architecture: A Review of Confidential, Human‑Accountable AI
-> Support for Scholarly Peer Review* (Joshi, Joshi, Baisil & Kini), published
-> open access in **Learned Publishing** (Wiley), Vol. 40, Issue 1.
+> 📄 **Peer-reviewed.** paperlab is the companion tool to *From Policy to Architecture: A Review of Confidential, Human‑Accountable AI Support for Scholarly Peer Review* (Joshi, Joshi, Baisil & Kini), *Learned Publishing* (Wiley), Vol. 40, Issue 1.
 > [Read the article →](https://doi.org/10.1002/leap.2119) · [Cite it ↓](#citation)
-
----
 
 <img width="1908" height="987" alt="paperlab interface" src="https://github.com/user-attachments/assets/9bf9a3be-286d-4292-b503-bba5869a956e" />
 
 ---
 
-## The research behind it
+## Why it exists
 
-Publishers broadly agree on two principles for AI in peer review: **manuscripts
-must stay confidential**, and **a human reviewer must remain accountable for the
-judgment**. Most guidance stops at policy — it tells reviewers what not to do,
-without offering a tool that makes the right thing the easy thing.
+Journals agree on two rules for AI in peer review: **keep manuscripts confidential**, and **keep a human responsible for the judgment**. paperlab is built so that following those rules is the easy option.
 
-The article examines how those policy commitments can be carried down into
-system architecture. paperlab is a working instance of that idea:
+<img src="assets/privacy.svg" alt="Your paper and the AI model stay on your computer. Only short search phrases go online, and only if you use a search feature." width="100%">
 
-| Policy principle | How paperlab implements it |
+<img src="assets/features.svg" alt="Four reviewer viewpoints: Methods, Ethics, Novelty, Scope. Plus an overall recommendation, fact-checking, chat and search. You read the paper, paperlab raises flags, you check each flag, you make the call." width="100%">
+
+**Good to know**
+
+- **It's a helper, not a reviewer.** Read the paper yourself first. Treat every output as a hint to look closer, never as a verdict.
+- **It can be wrong.** It uses a small AI that fits on a laptop. Check everything against the paper.
+- **Authors can use it too.** Run it on your own draft to catch weak spots before reviewers do.
+- **Follow your journal's AI policy**, and disclose AI help where they ask you to.
+
+---
+
+## What you need
+
+| | |
 |---|---|
-| **Confidentiality** — unpublished work must not go to third-party AI providers | The model runs locally via Ollama. The PDF and its full text never leave your machine. |
-| **Human accountability** — the reviewer owns the judgment | Every output is a *flag to look closer*, with the quoted passage it reacts to. Nothing is presented as a verdict. |
-| **Transparency** — reviewers should be able to see how a tool reached its output | Model reasoning is captured in a toggleable block; every source fetched during a review is listed with its origin. |
-| **Minimal, explicit data flow** | The only outbound traffic is short search queries from features you trigger, routed through your own self-hosted SearXNG. |
-| **Reliability over autonomy** | Python orchestrates a deterministic pipeline; the model only performs narrow, grounded text tasks. It never decides what to do next. |
-
-If you use paperlab in your own work, or build on its design, please
-[cite the article](#citation).
+| 💻 Computer | A Mac or Linux computer. (Windows works through WSL2; ask your IT team to set that up.) |
+| 🧠 Memory | 16 GB recommended. On a Mac: Apple menu  → **About This Mac**. |
+| 💾 Free space | About 10 GB, for the AI model. |
+| 🌐 Internet | Only for the one-time download. After that, it works offline. |
 
 ---
 
-## What this is — and what it is not
+## Install (one time)
 
-**paperlab is an aid, not a reviewer.** It speeds up the mechanical parts of
-engaging with a paper — surfacing candidate methodology issues, ethics concerns,
-related work, and checkable claims — so you spend your attention where it
-matters. It does not, and cannot, replace reading and judgment.
+<img src="assets/setup-steps.svg" alt="Step 1 Download, step 2 Open Terminal, step 3 Install, step 4 Start and open in your browser." width="100%">
 
-- **Read the paper in full first.** We strongly recommend that reviewers read a
-  paper in its entirety before using paperlab. Every output is a *flag to look
-  closer*, never a verdict to defer to. The accept / weak-accept / reject banner
-  is a calibration gut-check from a small local model — treat it as a prompt to
-  reflect on your own reasoning, not as a program-committee outcome.
-- **For authors too.** Run paperlab on your own draft before submitting. The
-  same critiques that help a reviewer triage will help you find your weak
-  points — unsupported claims, a confound a referee will catch, a thin ethics
-  section, an unclear contribution — while you can still fix them.
-- **It is small-model output.** An 8B-class model flags issues and can be wrong
-  or shallow. Verify everything against the actual paper.
-- **Check your venue's policy.** Even with a fully local tool, follow the AI
-  policy of the journal or conference you're reviewing for, and disclose AI
-  assistance where it asks you to.
+You'll use **Terminal**, a window where you paste commands. You don't need to understand them: copy each grey box, paste it, and press **Enter**.
 
-## Privacy
+**Step 1 · Download.** On this GitHub page, click the green **Code** button → **Download ZIP**. Double-click the ZIP to unzip it.
 
-The paper, the language model, and all analysis run **entirely on your
-machine** through Ollama. The PDF and its full text never leave your computer.
+**Step 2 · Open Terminal in that folder.**
+On a Mac, press **⌘ Command + Space**, type `Terminal`, and press **Enter**. Then type `cd ` (with a space after it), drag the unzipped paperlab folder into the Terminal window, and press **Enter**.
 
-The *only* outbound network traffic comes from features you explicitly trigger:
-the arXiv tab, the Web tab, and Fact-check send short **search query strings**
-to search engines through your own self-hosted SearXNG instance (for
-fact-check, those queries are brief claim phrases extracted from the paper). If
-you never open those tabs, nothing about the paper leaves the machine at all.
-Chats, the corpus, and cached text are stored locally under `~/.paperlab`.
-
----
-
-## Requirements
-
-- Linux or macOS (Windows via WSL2)
-- Python 3.10+
-- ~6–10 GB free disk for the model weights
-- 16 GB RAM recommended (for a full paper in a 32k context)
-- Optional, only for Web search / Fact-check: **Podman** (preferred) or Docker
-
----
-
-## Setup
-
-### 1. Install Ollama, models, and Python deps
+**Step 3 · Install.** Paste this and press **Enter**:
 
 ```bash
 bash setup.sh
-source .venv/bin/activate
 ```
 
-This installs Ollama, pulls `qwen3:8b` (~5 GB) and `nomic-embed-text` (~270 MB),
-creates a virtualenv, and installs the Python dependencies
-(`pymupdf4llm`, `requests`, `fastapi`, `uvicorn`, `python-multipart`).
+This downloads the AI model (about 5 GB) and everything else it needs, so it can take a while. If it asks for your computer password, type it and press Enter. **The letters won't appear as you type; that's normal.**
 
-### 2. (Optional) Web search via SearXNG
+---
 
-Needed only for the **Web** tab and **Fact-check**. Use Podman — it's daemonless,
-so there's no background service to run at boot.
+## Use it (every time)
+
+Open Terminal in the paperlab folder (Step 2 above), then paste these three lines:
+
+```bash
+source .venv/bin/activate
+./lab.sh up
+python server.py
+```
+
+paperlab opens in your web browser. If it doesn't, go to **http://127.0.0.1:8000**. Keep the Terminal window open while you work.
+
+**Then:**
+
+1. **Upload** a PDF (drag it onto the left sidebar).
+2. Open the **Review** tab and click **Run all** for the four viewpoints plus an overall recommendation.
+3. Use **Brainstorm** to ask questions about the paper. Your chats are saved.
+
+**When you're done,** click the Terminal window, press **Ctrl + C**, then paste:
+
+```bash
+./lab.sh down
+```
+
+> **Fact-check and Web search** need one extra setup step. See [Optional: web search](#optional-web-search-for-fact-check) below.
+
+---
+
+## Common problems
+
+| What you see | What to do |
+|---|---|
+| `Permission denied` | Paste `chmod +x lab.sh setup.sh`, press Enter, and try again. |
+| "Model not found" | Paste `ollama list` to see installed models, then `ollama pull <name>` (see the `PAPERLAB_MODEL` setting below). |
+| Text shows `**` or `#` symbols | Refresh the page with **Ctrl + Shift + R** (Mac: **⌘ + Shift + R**). |
+| "Run all" is slow | Normal: it's four full readings of the paper on your laptop. Run one viewpoint at a time instead. |
+
+---
+
+## Privacy, in plain words
+
+The paper, the AI, and all the analysis stay **on your computer**. The only things that go online are short search phrases, and only when you use a search feature: the Web or arXiv tabs, Fact-check, or the related-work lookup in a Novelty review. If you don't use those, nothing about the paper leaves your machine. Your chats and files are saved in a hidden folder called `.paperlab` in your home folder.
+
+---
+
+## For technical users
+
+<details>
+<summary><b>Optional: web search for Fact-check</b></summary>
+
+### Optional: web search for Fact-check
+
+Needed only for the **Web** tab and **Fact-check**. Use Podman. It's daemonless, so there's no background service to run at boot.
 
 ```bash
 sudo apt install -y podman          # or: brew install podman
@@ -133,73 +142,44 @@ podman run -d --name searxng -p 8080:8080 \
 curl -s 'http://localhost:8080/search?q=test&format=json' | head -c 200
 ```
 
-If `curl` returns JSON, you're set. If it 500s, confirm your config loaded:
-`podman exec searxng cat /etc/searxng/settings.yml` should show `limiter: false`.
+If `curl` returns JSON, you're set. If it 500s, confirm your config loaded: `podman exec searxng cat /etc/searxng/settings.yml` should show `limiter: false`.
 
-### 3. Run it
+Then start with `./lab.sh up-web` instead of `./lab.sh up`.
+</details>
 
-```bash
-./lab.sh up          # start Ollama only (review, brainstorm, corpus)
-./lab.sh up-web      # start Ollama + SearXNG (adds Web search + Fact-check)
-python server.py     # opens http://127.0.0.1:8000
-# when done:
-./lab.sh down        # stop everything
-```
+<details>
+<summary><b>Requirements, services and startup</b></summary>
 
-`server.py` binds to `127.0.0.1` only. `lab.sh` brings services up on demand and
-leaves them off at boot, so nothing idles in the background.
+- Linux or macOS (Windows via WSL2), Python 3.10+
+- `setup.sh` installs Ollama, pulls `qwen3:8b` (~5 GB) and `nomic-embed-text` (~270 MB), creates a virtualenv, and installs `pymupdf4llm`, `requests`, `fastapi`, `uvicorn`, `python-multipart`.
+- Optional, only for Web search / Fact-check: **Podman** (preferred) or Docker.
+- `server.py` binds to `127.0.0.1` only. `lab.sh` brings services up on demand and leaves them off at boot.
 
-### 4. Keep services off at startup (one time)
-
-Ollama and Docker install as always-on services. To stop them auto-starting
-(Podman needs nothing — it has no daemon):
+To stop Ollama auto-starting (Podman needs nothing; it has no daemon):
 
 ```bash
 # Linux
 sudo systemctl disable --now ollama
 # macOS: System Settings -> Login Items -> remove Ollama
 ```
+</details>
 
----
+<details>
+<summary><b>Features in detail</b></summary>
 
-## Using it
-
-1. **Upload** a PDF (drag onto the sidebar or click **+ Upload PDF**) and click
-   it to view in the native PDF pane.
-2. **Review** tab: run one persona or **Run all**. With Novelty included it
-   fetches related work and lists every source. After Run all it produces an
-   **overall recommendation**.
-3. **Fact-check claims**: extracts the paper's checkable claims, searches each,
-   and shows supported / contradicted / unclear with source links.
-4. **Brainstorm**: chat with the whole paper in context; history is saved.
-5. **Corpus / Web / arXiv**: search your own paper collection, the web, or arXiv.
-6. Toggle **show model thinking** in the sidebar to reveal the model's reasoning.
-
----
-
-## Features
-
-- **Reviewer personas** — Methodology (confounds, sampling/vantage bias, ground
-  truth, confirmed-vs-suspected), Ethics (IRB, disclosure, harm, PII, consent),
-  Novelty (contribution + delta, grounded in fetched related work), Scoping
-  (one-sentence contribution, what to cut). Each quotes the passage it reacts to.
-- **Overall decision** — synthesizes the four critiques into accept / weak
-  accept / weak reject / reject, with a 1–5 score, confidence, and a for/against
-  summary.
-- **Fact-check** — claim extraction → web search → verdict + links. Deterministic
-  pipeline; the model only extracts and judges.
-- **Websites & sources fetched** — every link pulled during a review is listed
-  with its origin (arXiv / Exa / corpus).
-- **Brainstorm chat** — persistent per-paper history under `~/.paperlab/chats`.
-- **Corpus search** — embed papers (`nomic-embed-text`) into plain SQLite, search
-  semantically. No vector-DB server.
+- **Reviewer personas**: Methodology (confounds, sampling/vantage bias, ground truth, confirmed-vs-suspected), Ethics (IRB, disclosure, harm, PII, consent), Novelty (contribution + delta, grounded in fetched related work), Scoping (one-sentence contribution, what to cut). Each quotes the passage it reacts to.
+- **Overall decision**: synthesizes the four critiques into accept / weak accept / weak reject / reject, with a 1–5 score, confidence, and a for/against summary. Treat it as a calibration gut-check, not a program-committee outcome.
+- **Fact-check**: claim extraction → web search → supported / contradicted / unclear, with links. Deterministic pipeline; the model only extracts and judges.
+- **Sources fetched**: every link pulled during a review is listed with its origin (arXiv / Exa / corpus).
+- **Brainstorm chat**: persistent per-paper history under `~/.paperlab/chats`.
+- **Corpus search**: embed papers (`nomic-embed-text`) into plain SQLite and search semantically. No vector-DB server.
 - **Web (SearXNG)** and **arXiv** search.
-- **Rich rendering** — markdown, code, tables, and LaTeX math (`$x_i$`, `$$...$$`)
-  via KaTeX. Math and markdown are decoupled, so neither can break the other.
-- **Thinking** — model reasoning captured into a collapsible block, hidden by
-  default, stripped from saved context.
+- **Rich rendering**: markdown, code, tables, and LaTeX math via KaTeX.
+- **Show model thinking**: sidebar toggle; reasoning is hidden by default and stripped from saved context.
+</details>
 
-## CLI
+<details>
+<summary><b>Command line</b></summary>
 
 ```bash
 python paperlab.py review paper.pdf [--persona methodology]
@@ -210,55 +190,58 @@ python paperlab.py search "ACR fingerprinting"
 python paperlab.py web "smart TV data collection"
 python paperlab.py arxiv "smart TV ACR privacy"
 ```
+</details>
 
-## Configuration (environment variables)
+<details>
+<summary><b>Settings (environment variables)</b></summary>
 
 | var | default | purpose |
 |---|---|---|
 | `PAPERLAB_MODEL` | `gemma4:latest` | reasoning model for stronger critique + vision + 128k context (tighter on RAM) |
 | `PAPERLAB_EMBED` | `nomic-embed-text` | embedding model |
-| `PAPERLAB_CTX` | `32768` | context window — **do not lower** or papers get truncated |
+| `PAPERLAB_CTX` | `32768` | context window. **Do not lower** or papers get truncated |
 | `PAPERLAB_DIR` | `~/.paperlab` | where papers, cache, corpus, and chats live |
 | `SEARXNG_URL` | `http://localhost:8080` | your SearXNG instance |
 | `EXA_API_KEY` | — | optional semantic search for the Sources panel |
 | `OLLAMA_HOST` | `http://localhost:11434` | Ollama endpoint |
 
-## Design notes
+On lower-spec machines, try a smaller model.
+</details>
 
-Your Python orchestrates; the local model only does narrow, grounded text
-tasks — small models are unreliable at agentic tool-calling, so paperlab never
-asks the model to decide what to do. Single-paper work loads the whole paper
-into a 32k context (no RAG; chunking hurts review quality). RAG is used only for
-cross-paper corpus search.
+<details>
+<summary><b>Design notes: from policy to architecture</b></summary>
 
-These choices follow directly from the architecture argued for in the
-[published article](https://doi.org/10.1002/leap.2119): keep confidential text
-local, keep the pipeline auditable, and keep the human in charge of the
-judgment.
+| Policy principle | How paperlab implements it |
+|---|---|
+| **Confidentiality** | The model runs locally via Ollama. The PDF and its full text never leave your machine. |
+| **Human accountability** | Every output is a flag to look closer, with the quoted passage it reacts to. Nothing is presented as a verdict. |
+| **Transparency** | Model reasoning is captured in a toggleable block; every source fetched during a review is listed with its origin. |
+| **Minimal, explicit data flow** | The only outbound traffic is short search queries from features you trigger. |
+| **Reliability over autonomy** | Python orchestrates a deterministic pipeline; the model only performs narrow, grounded text tasks and never decides what to do next. |
 
-## Troubleshooting
+Small models are unreliable at agentic tool-calling, so paperlab never asks the model to decide what to do. Single-paper work loads the whole paper into a 32k context (no RAG; chunking hurts review quality). RAG is used only for cross-paper corpus search.
+</details>
 
-- **`404 ... /api/chat` / "Model not found"** — the model isn't pulled.
-  `ollama list`, then `ollama pull <PAPERLAB_MODEL>`.
-- **SearXNG 500, log says `X-Forwarded-For nor X-Real-IP`** — the limiter is on.
-  Ensure your `settings.yml` has `limiter: false` and is actually mounted
-  (`podman exec searxng cat /etc/searxng/settings.yml`).
-- **Podman `unauthorized: incorrect username or password`** — stale Docker Hub
-  creds. `podman logout --all` and move aside `~/.docker/config.json`.
-- **`docker.service` won't start** — use Podman instead; it's daemonless and
-  avoids the containerd dependency entirely.
-- **Markdown shows as raw `**`/`#`** — hard-refresh (Ctrl-Shift-R); if it
-  persists, check the browser console for a failed CDN load.
-- **"Run all" is slow** — it's four sequential full-context generations on a
-  local model. Run one persona at a time, or use a smaller/faster model.
+<details>
+<summary><b>More troubleshooting</b></summary>
 
-## Files
+- **`404 ... /api/chat` / "Model not found"**: the model isn't pulled. `ollama list`, then `ollama pull <PAPERLAB_MODEL>`.
+- **SearXNG 500, log says `X-Forwarded-For nor X-Real-IP`**: the limiter is on. Ensure `settings.yml` has `limiter: false` and is mounted (`podman exec searxng cat /etc/searxng/settings.yml`).
+- **Podman `unauthorized: incorrect username or password`**: stale Docker Hub creds. `podman logout --all` and move aside `~/.docker/config.json`.
+- **`docker.service` won't start**: use Podman instead; it's daemonless and avoids the containerd dependency.
+- **Raw markdown persists after refresh**: check the browser console for a failed CDN load.
+</details>
 
-- `paperlab.py` — core logic + CLI
-- `server.py` — FastAPI app (endpoints, streaming)
-- `index.html` — the entire UI in one file
-- `lab.sh` — on-demand service launcher
-- `setup.sh` — installer
+<details>
+<summary><b>Files</b></summary>
+
+- `paperlab.py`: core logic + CLI
+- `server.py`: FastAPI app (endpoints, streaming)
+- `index.html`: the entire UI in one file
+- `lab.sh`: on-demand service launcher
+- `setup.sh`: installer
+- `assets/`: README infographics
+</details>
 
 ---
 
@@ -266,10 +249,7 @@ judgment.
 
 If paperlab or its design informs your work, please cite:
 
-> Joshi, H., Joshi, U., Baisil, S., & Kini, B. S. (2027). From Policy to
-> Architecture: A Review of Confidential, Human‑Accountable AI Support for
-> Scholarly Peer Review. *Learned Publishing*, 40(1), e2119.
-> https://doi.org/10.1002/leap.2119
+> Joshi, H., Joshi, U., Baisil, S., & Kini, B. S. (2027). From Policy to Architecture: A Review of Confidential, Human‑Accountable AI Support for Scholarly Peer Review. *Learned Publishing*, 40(1), e2119. https://doi.org/10.1002/leap.2119
 
 ```bibtex
 @article{joshi2027policy,
@@ -288,9 +268,4 @@ If paperlab or its design informs your work, please cite:
 
 ---
 
-## In short
-
-paperlab exists to make you faster, not to think for you. Read the paper, form
-your own view, and let the tool help you check it, find what you missed, and
-catch your own weak points before someone else does — all without your draft
-ever leaving your machine.
+**In short:** paperlab makes you faster; it doesn't think for you. Read the paper, form your own view, and let it help you check your work, all without the paper ever leaving your machine.
