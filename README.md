@@ -1,31 +1,69 @@
 # paperlab.
 
-A local research workbench for reviewing, fact-checking, and pressure-testing papers — built for any and all fields. It runs on a 16 GB laptop, keeps the model under 10 GB, and does all of its analysis on your own machine. (You can try playing with smaller models if your system specs are lower)
+[![DOI](https://img.shields.io/badge/DOI-10.1002%2Fleap.2119-blue)](https://doi.org/10.1002/leap.2119)
+[![Published in Learned Publishing](https://img.shields.io/badge/Published-Learned%20Publishing%20(Wiley)-0a7d5a)](https://doi.org/10.1002/leap.2119)
+![Runs locally](https://img.shields.io/badge/runs-100%25%20local-informational)
+
+**A confidential, human-accountable research workbench for reviewing, fact-checking, and pressure-testing papers — in any field.**
+
+paperlab runs on a 16 GB laptop, keeps the model under 10 GB, and does all of its analysis on your own machine. (Lower specs? Try a smaller model.)
+
+> 📄 **Peer-reviewed research.** paperlab is the companion system to
+> *From Policy to Architecture: A Review of Confidential, Human‑Accountable AI
+> Support for Scholarly Peer Review* (Joshi, Joshi, Baisil & Kini), published
+> open access in **Learned Publishing** (Wiley), Vol. 40, Issue 1.
+> [Read the article →](https://doi.org/10.1002/leap.2119) · [Cite it ↓](#citation)
 
 ---
 
-<img width="1908" height="987" alt="image" src="https://github.com/user-attachments/assets/9bf9a3be-286d-4292-b503-bba5869a956e" />
+<img width="1908" height="987" alt="paperlab interface" src="https://github.com/user-attachments/assets/9bf9a3be-286d-4292-b503-bba5869a956e" />
 
+---
+
+## The research behind it
+
+Publishers broadly agree on two principles for AI in peer review: **manuscripts
+must stay confidential**, and **a human reviewer must remain accountable for the
+judgment**. Most guidance stops at policy — it tells reviewers what not to do,
+without offering a tool that makes the right thing the easy thing.
+
+The article examines how those policy commitments can be carried down into
+system architecture. paperlab is a working instance of that idea:
+
+| Policy principle | How paperlab implements it |
+|---|---|
+| **Confidentiality** — unpublished work must not go to third-party AI providers | The model runs locally via Ollama. The PDF and its full text never leave your machine. |
+| **Human accountability** — the reviewer owns the judgment | Every output is a *flag to look closer*, with the quoted passage it reacts to. Nothing is presented as a verdict. |
+| **Transparency** — reviewers should be able to see how a tool reached its output | Model reasoning is captured in a toggleable block; every source fetched during a review is listed with its origin. |
+| **Minimal, explicit data flow** | The only outbound traffic is short search queries from features you trigger, routed through your own self-hosted SearXNG. |
+| **Reliability over autonomy** | Python orchestrates a deterministic pipeline; the model only performs narrow, grounded text tasks. It never decides what to do next. |
+
+If you use paperlab in your own work, or build on its design, please
+[cite the article](#citation).
+
+---
 
 ## What this is — and what it is not
 
 **paperlab is an aid, not a reviewer.** It speeds up the mechanical parts of
 engaging with a paper — surfacing candidate methodology issues, ethics concerns,
-related work, and checkable claims, so you spend your attention where it
+related work, and checkable claims — so you spend your attention where it
 matters. It does not, and cannot, replace reading and judgment.
 
-- **Read the paper in full first.** The developers strongly recommend that
-  reviewers read a paper in its entirety before using paperlab. Every output
-  here is a *flag to look closer*, never a verdict to defer to. The
-  accept / weak-accept / reject banner is a calibration gut-check from a small
-  local model — treat it as a prompt to reflect on your own reasoning, not as a
-  program-committee outcome.
+- **Read the paper in full first.** We strongly recommend that reviewers read a
+  paper in its entirety before using paperlab. Every output is a *flag to look
+  closer*, never a verdict to defer to. The accept / weak-accept / reject banner
+  is a calibration gut-check from a small local model — treat it as a prompt to
+  reflect on your own reasoning, not as a program-committee outcome.
 - **For authors too.** Run paperlab on your own draft before submitting. The
   same critiques that help a reviewer triage will help you find your weak
   points — unsupported claims, a confound a referee will catch, a thin ethics
   section, an unclear contribution — while you can still fix them.
 - **It is small-model output.** An 8B-class model flags issues and can be wrong
   or shallow. Verify everything against the actual paper.
+- **Check your venue's policy.** Even with a fully local tool, follow the AI
+  policy of the journal or conference you're reviewing for, and disclose AI
+  assistance where it asks you to.
 
 ## Privacy
 
@@ -193,6 +231,11 @@ asks the model to decide what to do. Single-paper work loads the whole paper
 into a 32k context (no RAG; chunking hurts review quality). RAG is used only for
 cross-paper corpus search.
 
+These choices follow directly from the architecture argued for in the
+[published article](https://doi.org/10.1002/leap.2119): keep confidential text
+local, keep the pipeline auditable, and keep the human in charge of the
+judgment.
+
 ## Troubleshooting
 
 - **`404 ... /api/chat` / "Model not found"** — the model isn't pulled.
@@ -219,9 +262,35 @@ cross-paper corpus search.
 
 ---
 
+## Citation
+
+If paperlab or its design informs your work, please cite:
+
+> Joshi, H., Joshi, U., Baisil, S., & Kini, B. S. (2027). From Policy to
+> Architecture: A Review of Confidential, Human‑Accountable AI Support for
+> Scholarly Peer Review. *Learned Publishing*, 40(1), e2119.
+> https://doi.org/10.1002/leap.2119
+
+```bibtex
+@article{joshi2027policy,
+  author  = {Joshi, Het and Joshi, Urvish and Baisil, Sharon and Kini, B. Sanjay},
+  title   = {From Policy to Architecture: A Review of Confidential,
+             Human-Accountable AI Support for Scholarly Peer Review},
+  journal = {Learned Publishing},
+  year    = {2027},
+  volume  = {40},
+  number  = {1},
+  pages   = {e2119},
+  doi     = {10.1002/leap.2119},
+  url     = {https://doi.org/10.1002/leap.2119}
+}
+```
+
+---
+
 ## In short
 
 paperlab exists to make you faster, not to think for you. Read the paper, form
 your own view, and let the tool help you check it, find what you missed, and
-catch your own weak points before someone else does, all without your draft
+catch your own weak points before someone else does — all without your draft
 ever leaving your machine.
